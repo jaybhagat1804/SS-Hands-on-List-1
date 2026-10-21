@@ -1,63 +1,50 @@
 #include <stdio.h>
-#include <stdlib.h>
+#include <string.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
 #include <unistd.h>
-#include <fcntl.h>
-#include <sys/stat.h>
-#include <time.h>
 
-int main(int argc, char *argv[])
+int main()
 {
-    pid_t pid;
-    int hour, minute;
-    time_t now, target;
-    struct tm *t;
+    key_t key;
+    int shmid;
+    char *data;
 
-    if (argc != 3)
+    key = ftok(".", 'B');
+
+    shmid = shmget(key, 1024, IPC_CREAT | 0666);
+
+    if (shmid == -1)
     {
-        printf("Usage: %s <HH> <MM>\n", argv[0]);
+        perror("shmget");
         return 1;
     }
 
-    hour = atoi(argv[1]);
-    minute = atoi(argv[2]);
+    printf("Shared memory ID = %d\n", shmid);
 
-    pid = fork();
+    data = (char *)shmat(shmid, NULL, 0);
 
-    if (pid < 0)
-    {
-        perror("fork");
-        return 1;
-    }
+    strcpy(data, "Hello from shared memory");
 
-    if (pid > 0)
-    {
-        printf("Daemon started with PID %d\n", pid);
-        return 0;
-    }
+    printf("Data written: %s\n", data);
 
-    setsid();
+    shmdt(data);
 
-    chdir("/");
+    data = (char *)shmat(shmid, NULL, SHM_RDONLY);
 
-    umask(0);
+    printf("Read-only data: %s\n", data);
 
-    close(STDIN_FILENO);
-    close(STDOUT_FILENO);
-    close(STDERR_FILENO);
+    /*
+       Do NOT do:
+       data[0] = 'X';
+       because this attachment is read-only.
+    */
 
-    while (1)
-    {
-        now = time(NULL);
-        t = localtime(&now);
+    shmdt(data);
 
-        if (t->tm_hour == hour && t->tm_min == minute)
-        {
-            system("/home/jay-bhagat/Desktop/home/SS/test.sh");
-            break;
-        }
+    shmctl(shmid, IPC_RMID, NULL);
 
-        sleep(20);
-    }
+    printf("Shared memory removed\n");
 
     return 0;
 }

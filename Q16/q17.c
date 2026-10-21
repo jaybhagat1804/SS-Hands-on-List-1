@@ -1,0 +1,42 @@
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/wait.h>
+
+int main()
+{
+    int fd[2];
+
+    pipe(fd);
+
+    if (fork() == 0)
+    {
+        close(fd[0]);
+
+        close(STDOUT_FILENO);
+        dup(fd[1]);
+
+        close(fd[1]);
+
+        execlp("ls", "ls", "-l", NULL);
+    }
+
+    if (fork() == 0)
+    {
+        close(fd[1]);
+
+        close(STDIN_FILENO);
+        dup(fd[0]);
+
+        close(fd[0]);
+
+        execlp("wc", "wc", NULL);
+    }
+
+    close(fd[0]);
+    close(fd[1]);
+
+    wait(NULL);
+    wait(NULL);
+
+    return 0;
+}

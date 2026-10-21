@@ -1,23 +1,32 @@
 #include <stdio.h>
-#include <fcntl.h>
 #include <unistd.h>
+
+unsigned long long rdtsc()
+{
+    unsigned int low, high;
+
+    __asm__ volatile(
+        "rdtsc"
+        : "=a"(low), "=d"(high)
+    );
+
+    return ((unsigned long long)high << 32) | low;
+}
 
 int main()
 {
-    int fd;
+    unsigned long long start, end;
+    int i;
 
-    fd = open("file11111111111.txt", O_RDWR);
+    start = rdtsc();
 
-    if (fd == -1)
-    {
-        perror("open");
-        return 1;
-    }
+    for (i = 0; i < 100; i++)
+        getppid();
 
-    printf("File opened successfully.\n");
-    printf("File descriptor = %d\n", fd);
+    end = rdtsc();
 
-    close(fd);
+    printf("100 getppid() calls took %llu CPU cycles\n",
+           end - start);
 
     return 0;
 }

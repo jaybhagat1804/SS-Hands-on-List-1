@@ -1,35 +1,29 @@
 #include <stdio.h>
-#include <unistd.h>
-#include <sched.h>
+#include <sys/ipc.h>
+#include <sys/msg.h>
 
 int main()
 {
-    int policy;
-    struct sched_param param;
+    key_t key;
+    int msqid;
 
-    policy = sched_getscheduler(0);
+    key = ftok(".", 'A');
 
-    if (policy == SCHED_OTHER)
-        printf("Current policy: SCHED_OTHER\n");
+    msqid = msgget(key, IPC_CREAT | 0666);
 
-    else if (policy == SCHED_FIFO)
-        printf("Current policy: SCHED_FIFO\n");
-
-    else if (policy == SCHED_RR)
-        printf("Current policy: SCHED_RR\n");
-
-    else
-        printf("Unknown policy\n");
-
-    param.sched_priority = sched_get_priority_min(SCHED_RR);
-
-    if (sched_setscheduler(0, SCHED_RR, &param) == -1)
+    if (msqid == -1)
     {
-        perror("sched_setscheduler");
+        perror("msgget");
         return 1;
     }
 
-    printf("Scheduling policy changed to SCHED_RR\n");
+    if (msgctl(msqid, IPC_RMID, NULL) == -1)
+    {
+        perror("msgctl");
+        return 1;
+    }
+
+    printf("Message queue removed\n");
 
     return 0;
 }

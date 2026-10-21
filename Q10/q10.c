@@ -1,25 +1,36 @@
-#include<stdio.h>
-#include<fcntl.h>
-#include<unistd.h>
+#include <stdio.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+void handler(int sig)
+{
+    if (sig == SIGSEGV)
+        printf("SIGSEGV caught\n");
+
+    else if (sig == SIGINT)
+        printf("SIGINT caught\n");
+
+    else if (sig == SIGFPE)
+        printf("SIGFPE caught\n");
+}
 
 int main()
 {
-	int fd;
-	off_t pos;
-	fd = open("seekfile.txt", O_CREAT | O_RDWR | O_TRUNC, 0644);
-	if(fd == -1)
-	{
-		perror("open");
-		return 1;
-	}
-	
-	write(fd, "ABCDEFGHIJ", 10);
-	pos = lseek(fd, 10, SEEK_CUR);
-	printf("Return value of lseek = %ld\n", pos);
+    struct sigaction sa;
 
-	write(fd, "1234567890", 10);
+    sa.sa_handler = handler;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = 0;
 
-	close(fd);
-	return 0;
+    sigaction(SIGSEGV, &sa, NULL);
+    sigaction(SIGINT, &sa, NULL);
+    sigaction(SIGFPE, &sa, NULL);
+
+    printf("Press Ctrl+C to test SIGINT\n");
+
+    while (1)
+        pause();
+
+    return 0;
 }
-

@@ -1,40 +1,43 @@
 #include <stdio.h>
-#include <unistd.h>
-#include <sys/wait.h>
-#include <stdlib.h>
+#include <sys/ipc.h>
+#include <sys/msg.h>
 
 int main()
 {
-    pid_t children[3];
-    int i;
+    key_t key;
+    int msqid;
+    struct msqid_ds info;
 
-    for (i = 0; i < 3; i++)
+    key = ftok(".", 'A');
+
+    msqid = msgget(key, IPC_CREAT | 0666);
+
+    if (msqid == -1)
     {
-        children[i] = fork();
-
-        if (children[i] < 0)
-        {
-            perror("fork");
-            return 1;
-        }
-
-        if (children[i] == 0)
-        {
-            printf("Child %d: PID = %d\n", i + 1, getpid());
-
-            sleep((i + 1) * 2);
-
-            printf("Child %d exiting\n", i + 1);
-
-            exit(0);
-        }
+        perror("msgget");
+        return 1;
     }
 
-    printf("Parent waiting for Child 2...\n");
+    if (msgctl(msqid, IPC_STAT, &info) == -1)
+    {
+        perror("msgctl");
+        return 1;
+    }
 
-    waitpid(children[1], NULL, 0);
+    printf("Access permission = %o\n", info.msg_perm.mode);
+    printf("UID = %d\n", info.msg_perm.uid);
+    printf("GID = %d\n", info.msg_perm.gid);
 
-    printf("Child 2 has finished.\n");
+    printf("Last msgsnd time = %ld\n", info.msg_stime);
+    printf("Last msgrcv time = %ld\n", info.msg_rtime);
+    printf("Last change time = %ld\n", info.msg_ctime);
+
+    printf("Current bytes = %lu\n", info.msg_cbytes);
+    printf("Number of messages = %lu\n", info.msg_qnum);
+    printf("Maximum bytes = %lu\n", info.msg_qbytes);
+
+    printf("PID of last msgsnd = %d\n", info.msg_lspid);
+    printf("PID of last msgrcv = %d\n", info.msg_lrpid);
 
     return 0;
 }

@@ -1,33 +1,24 @@
 #include <stdio.h>
-#include <unistd.h>
-#include <stdlib.h>
+#include <sys/ipc.h>
+#include <sys/msg.h>
 
 int main()
 {
-    pid_t pid;
+    key_t key;
+    int msqid;
 
-    pid = fork();
+    key = ftok(".", 'A');
 
-    if (pid < 0)
+    msqid = msgget(key, IPC_CREAT | 0666);
+
+    if (msqid == -1)
     {
-        perror("fork");
+        perror("msgget");
         return 1;
     }
 
-    if (pid == 0)
-    {
-        sleep(5);
-
-        printf("Child PID = %d\n", getpid());
-        printf("New Parent PID = %d\n", getppid());
-
-        sleep(10);
-    }
-    else
-    {
-        printf("Parent exiting...\n");
-        exit(0);
-    }
+    printf("Key = %d\n", key);
+    printf("Message Queue ID = %d\n", msqid);
 
     return 0;
 }

@@ -1,28 +1,29 @@
-#include<stdio.h>
-#include<fcntl.h>
-#include<unistd.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <limits.h>
 
 int main()
 {
-	int fd[5];
-	for(int i=0; i<5; i++)
-	{
-		char filename[20];
-		sprintf(filename, "file%d.txt", i+1);
+    printf("Maximum exec arguments size: %ld bytes\n",
+           sysconf(_SC_ARG_MAX));
 
-		fd[i] = open(filename, O_CREAT | O_RDWR, 0644);
+    printf("Maximum processes per user: %ld\n",
+           sysconf(_SC_CHILD_MAX));
 
-		if(fd[i]==-1){
-			perror("open");
-			return 1;
-		}
+    printf("Clock ticks per second: %ld\n",
+           sysconf(_SC_CLK_TCK));
 
-		printf("%s->fd = %d", filename, fd[i]);
-	}
+    printf("Maximum open files: %ld\n",
+           sysconf(_SC_OPEN_MAX));
 
-		while(1)
-		{
-			sleep(1);
-		}
-		return 0;
+    printf("Page size: %ld bytes\n",
+           sysconf(_SC_PAGESIZE));
+
+    printf("Total physical pages: %ld\n",
+           sysconf(_SC_PHYS_PAGES));
+
+    printf("Available physical pages: %ld\n",
+           sysconf(_SC_AVPHYS_PAGES));
+
+    return 0;
 }

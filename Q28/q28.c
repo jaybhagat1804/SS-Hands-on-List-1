@@ -1,16 +1,45 @@
 #include <stdio.h>
-#include <sched.h>
+#include <sys/ipc.h>
+#include <sys/msg.h>
 
 int main()
 {
-    int min_priority;
-    int max_priority;
+    key_t key;
+    int msqid;
+    struct msqid_ds info;
 
-    min_priority = sched_get_priority_min(SCHED_FIFO);
-    max_priority = sched_get_priority_max(SCHED_FIFO);
+    key = ftok(".", 'A');
+    if(key==-1)
+    {
+      perror("ftok");
+      return 1;
+    }
+    
 
-    printf("Minimum real-time priority: %d\n", min_priority);
-    printf("Maximum real-time priority: %d\n", max_priority);
+    msqid = msgget(key, IPC_CREAT | 0666);
+    if(msqid==-1)
+    {
+      perror("msgget");
+      return 1;
+    }
+
+    if (msgctl(msqid, IPC_STAT, &info) == -1)
+    {
+        perror("msgctl");
+        return 1;
+    }
+
+    printf("Old permission = %o\n", info.msg_perm.mode);
+
+    info.msg_perm.mode = 0600;
+
+    if (msgctl(msqid, IPC_SET, &info) == -1)
+    {
+        perror("msgctl");
+        return 1;
+    }
+
+    printf("New permission = 0600\n");
 
     return 0;
 }

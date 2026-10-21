@@ -1,28 +1,21 @@
-#include<stdio.h>
-#include<sys/stat.h>
-#include<time.h>
+#include <stdio.h>
+#include <signal.h>
+#include <unistd.h>
 
 int main()
 {
-	struct stat st;
-	if(stat("file1.txt", &st) == -1)
-	{
-		perror("stat");
-		return 1;
-	}
+    signal(SIGINT, SIG_IGN);
 
-	printf("Inode                : %ld\n", st.st_ino);
-	printf("Hard links           : %ld\n", st.st_nlink);
-	printf("UID                  : %d\n", st.st_uid);
-	printf("GID                  : %d\n", st.st_gid);
-	printf("Size                 : %ld bytes\n", st.st_size);
-	printf("Block size           : %ld bytes\n", st.st_blksize);
-	printf("Number of Blocks     : %ld\n", st.st_blocks);
+    printf("SIGINT ignored. Press Ctrl+C.\n");
+    sleep(5);
 
-	printf("Last Access          : %s", ctime(&st.st_atime));
-	printf("Last Modification    : %s", ctime(&st.st_mtime));
-	printf("Last Change          : %s", ctime(&st.st_ctime));
+    signal(SIGINT, SIG_DFL);
 
-	return 0;
+    printf("SIGINT restored to default.\n");
+    printf("Press Ctrl+C now.\n");
+
+    while (1)
+        pause();
+
+    return 0;
 }
-

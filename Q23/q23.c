@@ -1,33 +1,38 @@
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <unistd.h>
-#include <stdlib.h>
+#include <fcntl.h>
+#include <sys/resource.h>
 
 int main()
 {
-    pid_t pid;
+    long max_files;
+    int fd[2];
+    int pipe_size;
 
-    pid = fork();
+    max_files = sysconf(_SC_OPEN_MAX);
 
-    if (pid < 0)
+    if (pipe(fd) == -1)
     {
-        perror("fork");
+        perror("pipe");
         return 1;
     }
 
-    if (pid == 0)
+    pipe_size = fcntl(fd[0], F_GETPIPE_SZ);
+
+    if (pipe_size == -1)
     {
-        printf("Child process exiting...\n");
-        exit(0);
+        perror("fcntl");
     }
     else
     {
-        printf("Parent PID = %d\n", getpid());
-        printf("Child PID = %d\n", pid);
-
-        printf("Parent sleeping...\n");
-
-        sleep(30);
+        printf("Pipe size: %d bytes\n", pipe_size);
     }
+
+    printf("Maximum open files: %ld\n", max_files);
+
+    close(fd[0]);
+    close(fd[1]);
 
     return 0;
 }

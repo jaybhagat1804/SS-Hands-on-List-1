@@ -1,17 +1,25 @@
-#include<unistd.h>
+#include <stdio.h>
+#include <pthread.h>
+
+void *function(void *arg)
+{
+    printf("Thread is running\n");
+    return NULL;
+}
 
 int main()
 {
-	char buffer[100];
-	int n;
+    pthread_t t1, t2, t3;
 
-	n = read(0, buffer, sizeof(buffer));
+    pthread_create(&t1, NULL, function, NULL);
+    pthread_create(&t2, NULL, function, NULL);
+    pthread_create(&t3, NULL, function, NULL);
 
-	if(n>0)
-	{
-		write(1, buffer, n);
-	}
+    pthread_join(t1, NULL);
+    pthread_join(t2, NULL);
+    pthread_join(t3, NULL);
 
-	return 0;
+    printf("All threads completed\n");
+
+    return 0;
 }
-

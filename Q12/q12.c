@@ -1,35 +1,38 @@
-#include<stdio.h>
-#include<fcntl.h>
-#include<unistd.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <signal.h>
+#include <stdlib.h>
 
 int main()
 {
-	int fd;
-	int flags;
-	int mode;
+    pid_t pid;
 
-	fd = open("file1.txt", O_RDWR);
-	if(fd==-1)
-	{
-		perror("open");
-		return 1;
-	}
-	
-	flags = fcntl(fd, F_GETFL);
-	mode = flags & O_ACCMODE;
+    pid = fork();
 
-	if(mode == O_RDONLY)
-	{
-		printf("File is opened in READ ONLY mode.\n");
-	}
-	else if(mode == O_WRONLY)
-	{
-		printf("File is opened in WRITE ONLY mode.\n");
-	}
-	else if(mode == O_RDWR)
-	{
-		printf("File is opened in READ WRITE mode.\n");
-	}
-	close(fd);
-	return 0;
+    if (pid < 0)
+    {
+        perror("fork");
+        return 1;
+    }
+
+    if (pid == 0)
+    {
+        sleep(2);
+
+        printf("Child killing parent...\n");
+
+        kill(getppid(), SIGKILL);
+    }
+    else
+    {
+        printf("Parent PID = %d\n", getpid());
+
+        while (1)
+        {
+            printf("Parent running...\n");
+            sleep(1);
+        }
+    }
+
+    return 0;
 }

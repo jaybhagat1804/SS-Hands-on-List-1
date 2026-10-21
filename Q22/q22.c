@@ -1,35 +1,40 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <sys/select.h>
 
 int main()
 {
     int fd;
-    pid_t pid;
+    char buffer[100];
 
-    fd = open("forkfile.txt", O_CREAT | O_WRONLY | O_TRUNC, 0644);
+    fd = open("myfifo", O_RDONLY | O_NONBLOCK);
 
-    if (fd == -1)
+    fd_set set;
+    struct timeval timeout;
+
+    FD_ZERO(&set);
+    FD_SET(fd, &set);
+
+    timeout.tv_sec = 10;
+    timeout.tv_usec = 0;
+
+    printf("Waiting for data for 10 seconds...\n");
+
+    int result = select(fd + 1, &set, NULL, NULL, &timeout);
+
+    if (result == -1)
     {
-        perror("open");
-        return 1;
+        perror("select");
     }
-
-    pid = fork();
-
-    if (pid < 0)
+    else if (result == 0)
     {
-        perror("fork");
-        return 1;
-    }
-
-    if (pid == 0)
-    {
-        write(fd, "Child process\n", 14);
+        printf("Timeout: no data received\n");
     }
     else
     {
-        write(fd, "Parent process\n", 15);
+        read(fd, buffer, sizeof(buffer));
+        printf("Received: %s\n", buffer);
     }
 
     close(fd);
